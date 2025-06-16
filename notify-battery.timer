@@ -1,0 +1,9 @@
+[Unit]
+Description=Run notifier every minute
+
+[Timer]
+OnStartupSec=1s
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=graphical-session.target

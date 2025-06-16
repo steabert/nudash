@@ -1,0 +1,27 @@
+#!/usr/bin/nu
+
+const max_title = 30
+def notify-windows [] {
+    # hyprctl clients -j | from json | select workspace.name class title | to md --pretty | lines | each {|| print $in}
+    let clients = hyprctl clients -j | from json | select workspace class title | into int workspace.id
+    let workspaces = $clients | get workspace | uniq
+
+    mut lines = []
+    for workspace in $workspaces {
+        # $lines = $lines | append $"[($workspace.id)] ($workspace.name):"
+        for client in ($clients | where workspace == $workspace) {
+            let app = $client.class
+            if ($client.title | str length) > $max_title {
+                $lines = $lines | append $"[($workspace.id)] ($app) 🗔  ($client.title | str substring ..<$max_title)…"
+            } else {
+                $lines = $lines | append $"[($workspace.id)] ($app) 🗔  ($client.title)"
+            }
+        }
+    }
+    let message = $lines | str join "\n"
+
+    let icon = "/usr/share/icons/HighContrast/scalable/apps-extra/preferences-system-windows.svg"
+    notify-send -a "screen" "Workspaces" $message -i $icon -u low -t 4000 -r 10
+}
+
+notify-windows

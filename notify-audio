@@ -1,0 +1,51 @@
+#!/usr/bin/nu
+
+def notify-speakers [] {
+    let volume = wpctl get-volume @DEFAULT_AUDIO_SINK@
+    let level = ($volume | parse -r 'Volume: (?<level>\d\.\d+)' | get level | first | into float) * 100 | math floor
+    let muted = $volume | str contains "MUTED"
+
+    let icon = if $muted {
+        "/usr/share/icons/HighContrast/48x48/status/audio-volume-muted.png"
+    } else if $level <= 33 {
+        "/usr/share/icons/HighContrast/48x48/status/audio-volume-low.png"
+    } else if $level <= 66 {
+        "/usr/share/icons/HighContrast/48x48/status/audio-volume-medium.png"
+    } else if $level <= 100 {
+        "/usr/share/icons/HighContrast/48x48/status/audio-volume-high.png"
+    } else {
+        $"audio-volume-overamplified-symbolic"
+    }
+    let urgency = if $muted { "critical" } else { "normal" }
+    notify-send -a "speakers" $"($level)%" -i $icon -u $urgency -t 8000 -r 10
+}
+
+def notify-mic [] {
+    let volume = wpctl get-volume @DEFAULT_AUDIO_SOURCE@
+    let level = ($volume | parse -r 'Volume: (?<level>\d\.\d+)' | get level | first | into float) * 100 | math floor
+    let muted = $volume | str contains "MUTED"
+
+    let icon = if $muted {
+        "/usr/share/icons/HighContrast/48x48/status/microphone-sensitivity-muted.png"
+    } else if $level <= 33 {
+        "/usr/share/icons/HighContrast/48x48/status/microphone-sensitivity-low.png"
+    } else if $level <= 66 {
+        "/usr/share/icons/HighContrast/48x48/status/microphone-sensitivity-medium.png"
+    } else {
+        "/usr/share/icons/HighContrast/48x48/status/microphone-sensitivity-high.png"
+    }
+    let urgency = if $muted { "critical" } else { "normal" }
+    notify-send -a "mic" $"($level)%" -i $icon -u $urgency -t 8000 -r 10
+}
+
+def main [action: string] {
+    match $action {
+        "volume-show"   => { notify-speakers }
+        "volume-toggle" => { wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; notify-speakers }
+        "volume-up"     => { wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+; notify-speakers }
+        "volume-down"   => { wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-; notify-speakers }
+        "mic-show"      => { notify-mic }
+        "mic-toggle"    => { wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle; notify-mic }
+        _               => { print -e "invalid command"; exit 1 }
+    }
+}

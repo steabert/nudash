@@ -1,0 +1,19 @@
+#!/usr/bin/nu
+
+def notify-brightness [] {
+    let max_brightness = brightnessctl m -c backlight | into float
+    let current_brightness = brightnessctl g -c backlight | into float
+    let level = ($current_brightness / $max_brightness) * 100 | math floor
+
+    let icon = "/usr/share/icons/HighContrast/48x48/status/display-brightness.png"
+    notify-send -a "screen" $"($level)%" -i $icon -u low -t 4000 -r 10
+}
+
+def main [action: string] {
+    match $action {
+        "show"   => { notify-brightness }
+        "up"     => { brightnessctl -e4 -n2 -c backlight set 5%+; notify-brightness }
+        "down"   => { brightnessctl -e4 -n2 -c backlight set 5%-; notify-brightness }
+        _        => { print -e "invalid command"; exit 1 }
+    }
+}

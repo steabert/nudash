@@ -1,0 +1,22 @@
+#!/usr/bin/nu
+
+def print_line [line: string] {
+    print -n ($line | fill -a center -c ' ' -w (term size).columns)
+}
+
+job spawn {
+    let key = input --numchar 1 -s
+    if $key == "q" {
+        exit
+    }
+}
+
+loop {
+    let now = (date now)
+    print_line ($now | format date "%A")
+    print_line ($now | format date "week %V")
+    print_line ($now | format date "%F")
+    print_line ($now | format date "%T%.3f")
+    sleep 100ms
+    clear
+}

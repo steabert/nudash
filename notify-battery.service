@@ -1,0 +1,6 @@
+[Unit]
+Description=System status notifications
+
+[Service]
+Type=oneshot
+ExecStart=/opt/nudash/notify-battery

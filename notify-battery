@@ -1,0 +1,40 @@
+#!/usr/bin/nu
+
+def notify-battery [capacity: int, charging: bool] {
+    let icon = if $charging {
+        if $capacity <= 33 {
+            "/usr/share/icons/HighContrast/48x48/status/battery-low-charging.png"
+        } else if $capacity <= 50 {
+            "/usr/share/icons/HighContrast/48x48/status/battery-medium-charging.png"
+        } else {
+            "/usr/share/icons/HighContrast/48x48/status/battery-good-charging.png"
+        }
+    } else {
+        if $capacity <= 33 {
+            "/usr/share/icons/HighContrast/48x48/status/battery-low.png"
+        } else if $capacity <= 50 {
+            "/usr/share/icons/HighContrast/48x48/status/battery-medium.png"
+        } else {
+            "/usr/share/icons/HighContrast/48x48/status/battery-good.png"
+        }
+    }
+    let urgency = if not $charging and $capacity < 20 {
+        "critical"
+    } else if not $charging {
+        "low"
+    } else {
+        "normal"
+    }
+    let message = if $charging { "charging" } else { "please charge" }
+    notify-send -a "battery" $"($capacity)%" $message -i $icon -u $urgency -t 8000 -r 10
+}
+
+def main [threshold: int = 20] {
+    let battery = "/sys/class/power_supply/BAT1"
+    let capacity = [$battery, capacity] | path join | open | into int
+    let status = [$battery, status] | path join | open | str trim | str downcase
+    if $capacity < $threshold {
+        notify-battery $capacity ($status == charging)
+    }
+}
+
